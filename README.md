@@ -46,6 +46,15 @@ O `init` escreve:
 Depois: `git init` + commit inicial; o remoto é adicionado (não é pushado sem
 você pedir).
 
+## Este repositório
+
+| caminho | o que é |
+|---|---|
+| `init` | o gerador |
+| `template/` | o que cada produto herda (docs, marca vazia, AGENTS, product.toml) |
+| `branding/` | a marca **do Gabarito** (não do produto) |
+| `AGENTS.md` | como trabalhar aqui |
+
 ## O que o `init` detecta
 
 | item | como | para quê |

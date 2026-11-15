@@ -34,4 +34,5 @@ commit inicial criado, `brand/`, `docs/` e `AGENTS.md` no lugar.
 |---|---|
 | `init` | o gerador: detecção, perguntas, render, git |
 | `template/` | o que o produto herda (docs, brand, AGENTS, product.toml) |
+| `branding/` | a marca do Gabarito (template), distinta de `template/brand/` |
 | `README.md` | como usar e o que o `init` detecta |
