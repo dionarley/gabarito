@@ -96,10 +96,16 @@ show_env() {
 
 # ---------------------------------------------------------------- perguntas
 
-ask() { # ask <variável> <rótulo> <padrão>
-  local __var=$1 __label=$2 __default=${3:-} __answer=""
+ask() { # ask <variável> <rótulo> <padrão> [opcional]
+  local __var=$1 __label=$2 __default=${3:-} __optional=${4:-} __answer=""
   if [ "$ASSUME_YES" = 1 ]; then
     printf -v "$__var" '%s' "$__default"
+    return
+  fi
+  if [ -n "$__optional" ]; then
+    read -r -p "$__label${__default:+ [$__default]}: " __answer || true
+    __answer=${__answer:-$__default}
+    printf -v "$__var" '%s' "$__answer"
     return
   fi
   if [ -n "$__default" ]; then
@@ -133,7 +139,7 @@ questions() {
   ask EMAIL "E-mail do autor" "${EMAIL:-$(git config user.email 2>/dev/null || echo)}"
   ask ACCENT "Cor de destaque do produto (hex)" "${ACCENT:-#2F6F8F}"
   ask ACCENT_ALT "Cor de apoio (hex)" "${ACCENT_ALT:-#B4683A}"
-  ask REMOTE "Remoto git (vazio para decidir depois)" "${REMOTE:-}"
+  ask REMOTE "Remoto git (enter para decidir depois)" "${REMOTE:-}" opcional
 }
 
 validate() {
