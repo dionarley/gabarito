@@ -1,5 +1,7 @@
 # Gabarito
 
+<p><img src="branding/logo/lockup.svg" alt="Gabarito — molde · docs · pdm" height="72"></p>
+
 Template de produto da plataforma **Forja**: cria o esqueleto de um produto com
 marca, docs, PDM e regras de trabalho já no lugar, e nada mais.
 
@@ -20,11 +22,17 @@ reescrever o produto — e para que dois produtos não herdem a marca um do outr
 ## Uso
 
 ```sh
-gabarito/init                       # interativo; cria ./<slug>/
-gabarito/init --into ../brasa       # diretório explícito
-gabarito/init --yes --name "Brasa" --slug brasa --prefix PS-001 \
-              --author "Tessera" --accent "#B4683A" --remote git@github.com:dionarley/brasa.git
+./init                       # interativo; cria ./<slug>/
+./init --into ../brasa       # diretório explícito
+./init --yes --name "Brasa" --slug brasa --prefix PS-001 --summary "estanhador 550 W" \
+       --author "Tessera" --email "voce@exemplo.com" --accent "#B4683A" \
+       --remote git@github.com:dionarley/brasa.git
 ```
+
+Flags: `--into`, `--name`, `--slug`, `--prefix`, `--summary`, `--author`,
+`--email`, `--accent`, `--accent-alt`, `--remote`, `--pdm-url`, `--yes`,
+`--force` (destino não vazio), `--no-git`. Sem terminal e sem `--yes`, ele para
+em vez de esperar entrada.
 
 O `init` escreve:
 
@@ -61,9 +69,9 @@ você pedir).
 |---|---|---|
 | SO e versão | `/etc/os-release` | registrar em `product.toml` e no log |
 | git | `git --version` | versionar o produto |
-| flatpak | `flatpak --version` + a origem dos apps | saber se os CAD rodam empacotados |
+| flatpak | `flatpak --version` | saber se os CAD rodam empacotados |
 | podman | `podman --version` | PDM/banco e visualizador em contêiner |
-| cargo/uv | `cargo --version`, `uv --version` | build do serviço e dos scripts |
+| cargo / python | `cargo --version`, `python3 -V` | build do serviço e dos scripts |
 | TeamCraft | `GET http://127.0.0.1:8080/healthz` | confirmar o PDM e gravar a URL |
 
 Nada é instalado: se falta ferramenta, o `init` avisa e segue.
