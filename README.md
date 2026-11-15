@@ -1,0 +1,78 @@
+# Gabarito
+
+Template de produto da plataforma **Forja**: cria o esqueleto de um produto com
+marca, docs, PDM e regras de trabalho já no lugar, e nada mais.
+
+> A Forja é a bancada. O Gabarito é o molde. O produto tem marca própria.
+
+## O que ele é e o que não é
+
+| é | não é |
+|---|---|
+| um `init` que pergunta o que só você sabe e **detecta** o resto (SO, git, flatpak/podman, TeamCraft) | um app, framework ou boilerplate de código |
+| um conjunto de docs e regras que sobrevive à troca de ferramenta | um gerador de site |
+| um molde agnóstico: nenhuma marca, nenhum item, nenhum produto hardcoded | o repositório de um produto |
+
+O Gabarito **não** copia código da Forja: o produto usa as ferramentas
+(`forja-pdm`, apps de CAD, PDM) por fora, para poder trocar de bancada sem
+reescrever o produto — e para que dois produtos não herdem a marca um do outro.
+
+## Uso
+
+```sh
+gabarito/init                       # interativo; cria ./<slug>/
+gabarito/init --into ../brasa       # diretório explícito
+gabarito/init --yes --name "Brasa" --slug brasa --prefix PS-001 \
+              --author "Dionarley" --accent "#B4683A" --remote git@github.com:dionarley/brasa.git
+```
+
+O `init` escreve:
+
+```
+<destino>/
+  product.toml          identidade, PDM, ambiente detectado
+  AGENTS.md             como se trabalha neste produto
+  README.md             o que é este produto
+  brand/brand.md        identidade: promessa, paleta, tipografia, voz
+  brand/palette.json    tokens em JSON
+  brand/tokens.css      tokens em CSS (claro e escuro)
+  docs/PLAN.md          fases e critérios de aceite
+  docs/LOG.md           registro cronológico (data, revisão, o que mudou)
+  docs/PDM.md           itens, revisões e ECO no TeamCraft
+  docs/STYLE.md         nomenclatura e estilo deste produto
+  .gitignore
+```
+
+Depois: `git init` + commit inicial; o remoto é adicionado (não é pushado sem
+você pedir).
+
+## O que o `init` detecta
+
+| item | como | para quê |
+|---|---|---|
+| SO e versão | `/etc/os-release` | registrar em `product.toml` e no log |
+| git | `git --version` | versionar o produto |
+| flatpak | `flatpak --version` + a origem dos apps | saber se os CAD rodam empacotados |
+| podman | `podman --version` | PDM/banco e visualizador em contêiner |
+| cargo/uv | `cargo --version`, `uv --version` | build do serviço e dos scripts |
+| TeamCraft | `GET http://127.0.0.1:8080/healthz` | confirmar o PDM e gravar a URL |
+
+Nada é instalado: se falta ferramenta, o `init` avisa e segue.
+
+## Contrato dos placeholders
+
+Os arquivos em `template/` usam `{{chave}}`; o `init` substitui uma vez e não
+reprocessa o resultado. Chaves:
+
+`name`, `slug`, `summary`, `prefix`, `author`, `email`, `accent`, `accent_alt`,
+`date`, `pdm_url`, `remote`, `os`, `git_version`, `flatpak`, `podman`, `cargo`,
+`python`.
+
+Se precisar de uma chave nova, ela entra em `template/` **e** no `init` (senão
+fica `{{chave}}` no arquivo gerado — o `init` falha se sobrar placeholder).
+
+## Regra
+
+Este repositório é público e **neutro**: nada de cor, item ou nome de produto
+real. Se um valor só existe em um produto, ele é pergunta do `init` — não
+conteúdo do template.

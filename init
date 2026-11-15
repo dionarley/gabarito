@@ -1,0 +1,252 @@
+#!/usr/bin/env bash
+# Cria um produto novo a partir do Gabarito.
+#
+#   init                       # interativo: cria ./<slug>/
+#   init --into ../brasa       # diretório explícito
+#   init --yes --name Brasa --slug brasa --prefix PS-001 \
+#        --author Dionarley --accent '#B4683A' --remote git@github.com:dionarley/brasa.git
+#
+# O que ele pergunta é o que só você sabe (nome, slug, marca, autor, remoto). O
+# que dá para detectar (SO, git, flatpak, podman, cargo, python, TeamCraft) ele
+# detecta e grava em product.toml. Nada é instalado.
+set -euo pipefail
+
+here=$(cd "$(dirname "$0")" && pwd)
+template="$here/template"
+
+die() { echo "erro: $*" >&2; exit 1; }
+say() { printf '%-10s %s\n' "$1" "$2"; }
+
+# ---------------------------------------------------------------- argumentos
+
+INTO=""
+ASSUME_YES=0
+FORCE=0
+NO_GIT=0
+NAME="" SLUG="" PREFIX="" SUMMARY="" AUTHOR="" EMAIL=""
+ACCENT="" ACCENT_ALT="" REMOTE="" PDM_URL=""
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --into)       INTO="${2:?--into exige um caminho}"; shift 2 ;;
+    --name)       NAME="${2:?}"; shift 2 ;;
+    --slug)       SLUG="${2:?}"; shift 2 ;;
+    --prefix)     PREFIX="${2:?}"; shift 2 ;;
+    --summary)    SUMMARY="${2:?}"; shift 2 ;;
+    --author)     AUTHOR="${2:?}"; shift 2 ;;
+    --email)      EMAIL="${2:?}"; shift 2 ;;
+    --accent)     ACCENT="${2:?}"; shift 2 ;;
+    --accent-alt) ACCENT_ALT="${2:?}"; shift 2 ;;
+    --remote)     REMOTE="${2:?}"; shift 2 ;;
+    --pdm-url)    PDM_URL="${2:?}"; shift 2 ;;
+    --yes|-y)     ASSUME_YES=1; shift ;;
+    --force)      FORCE=1; shift ;;
+    --no-git)     NO_GIT=1; shift ;;
+    -h|--help)    sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    *) die "argumento inesperado: $1 (veja --help)" ;;
+  esac
+done
+
+# ---------------------------------------------------------------- detecção
+
+detect() {
+  OS=$(uname -s)
+  if [ -r /etc/os-release ]; then
+    local pretty
+    pretty=$(sed -n 's/^PRETTY_NAME="\{0,1\}\(.*\)"\{0,1\}$/\1/p' /etc/os-release \
+      | head -1 | tr -d '"')
+    if [ -n "$pretty" ]; then OS=$pretty; fi
+  fi
+  GIT_VERSION=$(git --version 2>/dev/null | awk '{print $3}') || GIT_VERSION=ausente
+  [ -n "$GIT_VERSION" ] || GIT_VERSION=ausente
+  FLATPAK=$(flatpak --version 2>/dev/null | awk '{print $2}') || FLATPAK=ausente
+  [ -n "$FLATPAK" ] || FLATPAK=ausente
+  PODMAN=$(podman --version 2>/dev/null | awk '{print $3}') || PODMAN=ausente
+  [ -n "$PODMAN" ] || PODMAN=ausente
+  CARGO=$(cargo --version 2>/dev/null | awk '{print $2}') || CARGO=ausente
+  [ -n "$CARGO" ] || CARGO=ausente
+  PYTHON=$(python3 -V 2>&1 | awk '{print $2}') || PYTHON=ausente
+  [ -n "$PYTHON" ] || PYTHON=ausente
+
+  if [ -z "$PDM_URL" ]; then
+    if curl -sf --max-time 2 -o /dev/null http://127.0.0.1:8080/healthz 2>/dev/null; then
+      PDM_URL="http://127.0.0.1:8080"
+    else
+      PDM_URL="http://127.0.0.1:8080"   # previsto, ainda fora do ar
+      PDM_DOWN=1
+    fi
+  fi
+}
+
+show_env() {
+  echo "== ambiente desta máquina"
+  say SO "$OS"
+  say git "$GIT_VERSION"
+  say flatpak "$FLATPAK"
+  say podman "$PODMAN"
+  say cargo "$CARGO"
+  say python "$PYTHON"
+  if [ "${PDM_DOWN:-0}" = 1 ]; then
+    say TeamCraft "$PDM_URL (não respondeu — registrado mesmo assim)"
+  else
+    say TeamCraft "$PDM_URL (no ar)"
+  fi
+  echo
+}
+
+# ---------------------------------------------------------------- perguntas
+
+ask() { # ask <variável> <rótulo> <padrão>
+  local __var=$1 __label=$2 __default=${3:-} __answer=""
+  if [ "$ASSUME_YES" = 1 ]; then
+    printf -v "$__var" '%s' "$__default"
+    return
+  fi
+  if [ -n "$__default" ]; then
+    read -r -p "$__label [$__default]: " __answer || true
+    __answer=${__answer:-$__default}
+  else
+    while [ -z "$__answer" ]; do
+      read -r -p "$__label: " __answer || true
+      [ -n "$__answer" ] || echo "  (obrigatório)"
+    done
+  fi
+  printf -v "$__var" '%s' "$__answer"
+}
+
+slugify() {
+  printf '%s' "$1" | tr '[:upper:]' '[:lower:]' \
+    | sed 's/[^a-z0-9]\+/-/g; s/^-//; s/-$//'
+}
+
+questions() {
+  if [ ! -t 0 ] && [ "$ASSUME_YES" = 0 ]; then
+    die "sem terminal: passe --yes e as flags (--name, --prefix, --author, --email)"
+  fi
+  ask NAME "Nome do produto" "$NAME"
+  [ -n "$SLUG" ] || SLUG=$(slugify "$NAME")
+  ask SLUG "Slug (repo e pasta)" "$SLUG"
+  [ -n "$PREFIX" ] || PREFIX=$(printf '%s' "$SLUG" | tr '[:lower:]' '[:upper:]' | cut -c1-3)-001
+  ask PREFIX "Prefixo dos itens no PDM" "$PREFIX"
+  ask SUMMARY "Resumo em uma linha" "${SUMMARY:-}"
+  ask AUTHOR "Autor" "${AUTHOR:-$(git config user.name 2>/dev/null || echo)}"
+  ask EMAIL "E-mail do autor" "${EMAIL:-$(git config user.email 2>/dev/null || echo)}"
+  ask ACCENT "Cor de destaque do produto (hex)" "${ACCENT:-#2F6F8F}"
+  ask ACCENT_ALT "Cor de apoio (hex)" "${ACCENT_ALT:-#B4683A}"
+  ask REMOTE "Remoto git (vazio para decidir depois)" "${REMOTE:-}"
+}
+
+validate() {
+  local v
+  for v in NAME PREFIX AUTHOR EMAIL; do
+    [ -n "${!v}" ] || die "$v vazio (passe a flag correspondente)"
+  done
+  case "$SLUG" in
+    [a-z0-9]*) : ;;
+    *) die "slug inválido: '$SLUG' (use minúsculas, dígitos e hífen)" ;;
+  esac
+  printf '%s' "$SLUG" | grep -q '^[a-z0-9][a-z0-9-]*$' || die "slug inválido: '$SLUG'"
+  printf '%s' "$PREFIX" | grep -Eq '^[A-Z0-9]+-[0-9]{3}$' \
+    || die "prefixo inválido: '$PREFIX' (formato: PS-001)"
+  printf '%s' "$ACCENT" | grep -Eq '^#[0-9A-Fa-f]{6}$' || die "cor inválida: '$ACCENT'"
+  printf '%s' "$ACCENT_ALT" | grep -Eq '^#[0-9A-Fa-f]{6}$' || die "cor inválida: '$ACCENT_ALT'"
+  for v in "$NAME" "$SUMMARY" "$AUTHOR" "$EMAIL" "$REMOTE" "$PDM_URL"; do
+    case "$v" in
+      *'|'*) die "valor com '|' não é aceito: $v" ;;
+      *'{{'*|*'}}'*) die "valor com chave de placeholder: $v" ;;
+    esac
+    [ "$(printf '%s' "$v" | wc -l)" -eq 0 ] || die "valor com quebra de linha"
+  done
+}
+
+# ---------------------------------------------------------------- render
+
+fill() { # fill <arquivo> ; substitui {{chave}} pelos valores
+  local file=$1
+  local pairs=(
+    "name=$NAME" "slug=$SLUG" "summary=$SUMMARY" "prefix=$PREFIX"
+    "author=$AUTHOR" "email=$EMAIL" "accent=$ACCENT" "accent_alt=$ACCENT_ALT"
+    "date=$DATE" "pdm_url=$PDM_URL" "remote=$REMOTE" "os=$OS"
+    "git_version=$GIT_VERSION" "flatpak=$FLATPAK" "podman=$PODMAN"
+    "cargo=$CARGO" "python=$PYTHON"
+  )
+  local pair key value
+  for pair in "${pairs[@]}"; do
+    key=${pair%%=*}
+    value=${pair#*=}
+    value=${value//\\/\\\\}
+    value=${value//&/\\&}
+    sed -i "s|{{$key}}|$value|g" "$file"
+  done
+  if grep -q '{{' "$file"; then
+    grep -o '{{[^}]*}}' "$file" | sort -u | sed 's/^/  placeholder solto: /' >&2
+    die "$file ficou com placeholder não preenchido"
+  fi
+}
+
+render() {
+  local dest=$1 rel
+  mkdir -p "$dest"
+  while read -r rel; do
+    mkdir -p "$dest/$(dirname "$rel")"
+    cp "$template/$rel" "$dest/$rel"
+    fill "$dest/$rel"
+  done < <(cd "$template" && find . -type f -print)
+  mkdir -p "$dest/dist"
+  : >"$dest/dist/.gitkeep"
+}
+
+# ---------------------------------------------------------------- git
+
+init_git() {
+  local dest=$1
+  command -v git >/dev/null || { echo "git ausente: produto criado sem repositório"; return; }
+  if [ ! -d "$dest/.git" ]; then
+    git -C "$dest" init -q -b main
+  fi
+  git -C "$dest" add -A
+  git -C "$dest" -c user.name="$AUTHOR" -c user.email="$EMAIL" \
+    commit -q -m "produto: cria $NAME a partir do Gabarito" 2>/dev/null \
+    || git -C "$dest" -c user.name="$AUTHOR" -c user.email="$EMAIL" \
+         commit -q -m "produto: criação a partir do Gabarito"
+  if [ -n "$REMOTE" ]; then
+    if git -C "$dest" remote get-url origin >/dev/null 2>&1; then
+      git -C "$dest" remote set-url origin "$REMOTE"
+    else
+      git -C "$dest" remote add origin "$REMOTE"
+    fi
+  fi
+}
+
+# ---------------------------------------------------------------- main
+
+DATE=$(date +%F)
+detect
+show_env
+questions
+validate
+
+DEST=${INTO:-"$PWD/$SLUG"}
+if [ -e "$DEST" ] && [ -n "$(ls -A "$DEST" 2>/dev/null)" ]; then
+  [ "$FORCE" = 1 ] || die "$DEST não está vazio (use --force ou outro --into)"
+fi
+case "$DEST" in
+  /*) : ;;
+  *) DEST="$PWD/${DEST#./}" ;;
+esac
+
+render "$DEST"
+[ "$NO_GIT" = 1 ] || init_git "$DEST"
+
+echo "== produto criado em $DEST"
+find "$DEST" -type f -not -path '*/.git/*' -printf '  %P\n' | sort
+
+cat <<EOF
+
+próximos passos
+  1. revisar product.toml e brand/brand.md (o init só preencheu)
+  2. criar o repositório e subir:
+       gh repo create $SLUG --private --source="$DEST" --remote origin --push
+  3. PDM: o token vem do credentials.txt do TeamCraft; o projeto é '$PREFIX'
+  4. bancada: forja/tools/status.sh (TeamCraft e forja-pdm no ar)
+EOF

@@ -1,0 +1,35 @@
+# Identidade do produto — gerado por `gabarito init` em {{date}}.
+# Este arquivo é a fonte única do que o produto *é*; os docs falam sobre ele.
+
+[product]
+name = "{{name}}"
+slug = "{{slug}}"
+summary = "{{summary}}"
+prefix = "{{prefix}}"          # prefixo dos itens no PDM, ex.: PS-001
+
+[author]
+name = "{{author}}"
+email = "{{email}}"
+
+[brand]
+accent = "{{accent}}"          # cor de destaque do produto
+accent_alt = "{{accent_alt}}"
+tokens = "brand/tokens.css"
+palette = "brand/palette.json"
+
+[pdm]
+backend = "teamcraft"
+url = "{{pdm_url}}"
+project = "{{prefix}}"
+
+[repo]
+remote = "{{remote}}"
+
+# Detectado na máquina no dia da criação (não é requisito; é registro).
+[env]
+os = "{{os}}"
+git = "{{git_version}}"
+flatpak = "{{flatpak}}"
+podman = "{{podman}}"
+cargo = "{{cargo}}"
+python = "{{python}}"

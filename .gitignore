@@ -1,0 +1,4 @@
+# O template não gera build; só lixo de editor e teste local.
+.DS_Store
+*.swp
+/tmp/

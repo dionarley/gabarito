@@ -1,0 +1,36 @@
+{
+  "name": "{{name}}",
+  "slug": "{{slug}}",
+  "version": 1,
+  "colors": {
+    "accent": "{{accent}}",
+    "accentAlt": "{{accent_alt}}",
+    "graphite": "#1B1E22",
+    "paper": "#F5F2EC",
+    "muted": "#8A8F94"
+  },
+  "roles": {
+    "light": {
+      "background": "paper",
+      "surface": "#FFFFFF",
+      "text": "graphite",
+      "textMuted": "muted",
+      "accent": "accent",
+      "accentAlt": "accentAlt"
+    },
+    "dark": {
+      "background": "graphite",
+      "surface": "#23272C",
+      "text": "paper",
+      "textMuted": "#9AA1A7",
+      "accent": "accent",
+      "accentAlt": "accentAlt"
+    }
+  },
+  "type": {
+    "sans": "IBM Plex Sans",
+    "mono": "IBM Plex Mono"
+  },
+  "space": { "1": "4px", "2": "8px", "3": "16px", "4": "24px", "5": "32px", "6": "48px" },
+  "radius": { "sm": "4px", "md": "8px" }
+}

@@ -1,0 +1,15 @@
+# saída de CAD e build
+dist/*.pdf
+!dist/.gitkeep
+out/
+target/
+node_modules/
+
+# segredos
+.env
+credentials.toml
+**/credentials.toml
+
+# lixo de app CAD
+*.tmp
+.DS_Store

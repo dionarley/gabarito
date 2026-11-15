@@ -1,0 +1,36 @@
+/* {{name}} — tokens de marca (v1)
+ *
+ * Importe antes do CSS da aplicação. Tema escuro: classe `brand-dark` no <html>.
+ */
+:root {
+  --brand-accent: {{accent}};
+  --brand-accent-alt: {{accent_alt}};
+  --brand-graphite: #1b1e22;
+  --brand-paper: #f5f2ec;
+  --brand-muted: #8a8f94;
+
+  --bg: var(--brand-paper);
+  --surface: #ffffff;
+  --text: var(--brand-graphite);
+  --text-muted: var(--brand-muted);
+  --accent: var(--brand-accent);
+  --accent-alt: var(--brand-accent-alt);
+  --rule: #d9d4c8;
+
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+.brand-dark {
+  --bg: var(--brand-graphite);
+  --surface: #23272c;
+  --text: var(--brand-paper);
+  --text-muted: #9aa1a7;
+  --rule: #333a40;
+}
+
+/* número sempre no mono, com unidade */
+.brand-num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
