@@ -23,7 +23,7 @@ reescrever o produto — e para que dois produtos não herdem a marca um do outr
 gabarito/init                       # interativo; cria ./<slug>/
 gabarito/init --into ../brasa       # diretório explícito
 gabarito/init --yes --name "Brasa" --slug brasa --prefix PS-001 \
-              --author "Dionarley" --accent "#B4683A" --remote git@github.com:dionarley/brasa.git
+              --author "Tessera" --accent "#B4683A" --remote git@github.com:dionarley/brasa.git
 ```
 
 O `init` escreve:

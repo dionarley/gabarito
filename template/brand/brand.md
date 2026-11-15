@@ -9,8 +9,8 @@ no prazo é dito antes, não depois.
 
 - **Nome:** {{name}} · **slug:** `{{slug}}`
 - Não use o nome como adjetivo (“solução {{name}}”); ele é o produto.
-- A marca pessoal (Dionarley) assina o laudo e a proposta — **não** é logo do
-  produto e não aparece no produto.
+- A marca que assina (Tessera) responde pelo laudo e pela proposta — **não** é
+  logo do produto e não aparece no produto.
 
 ## Paleta
 
